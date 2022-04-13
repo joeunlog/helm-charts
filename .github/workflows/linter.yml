@@ -15,7 +15,32 @@ jobs:
 
       - name: Check Docs
         run: |
-          docker run --rm --volume "$(pwd):/helm-docs" -u "$(id -u)" jnorwood/helm-docs:v1.4.0
+          OLD_CHARTS="./charts/mimir-distributed\n
+          ./charts/loki-distributed\n
+          ./charts/enterprise-logs\n
+          ./charts/tempo-distributed\n
+          ./charts/loki-canary\n
+          ./charts/grafana\n
+          ./charts/enterprise-logs-simple\n
+          ./charts/promtail\n
+          ./charts/fluent-bit\n
+          ./charts/enterprise-metrics\n
+          ./charts/loki\n
+          ./charts/agent-operator\n
+          ./charts/loki-stack\n
+          ./charts/tempo\n
+          ./charts/tempo-vulture\n
+          ./charts/loki-simple-scalable\n"
+
+          for i in $(find ./charts -mindepth 1 -maxdepth 1 -type d) ; do
+            if echo -e ${OLD_CHARTS} | grep -qE "^[[:space:]]+$i$" ; then
+              echo "Running old (1.4.0) helm-docs for $i"
+              docker run --rm --volume "$(pwd)/$i:/helm-docs" -u "$(id -u)" jnorwood/helm-docs:v1.4.0
+            else
+              echo "Running new (1.8.1) helm-docs for $i"
+              docker run --rm --volume "$(pwd)/$i:/helm-docs" -u "$(id -u)" jnorwood/helm-docs:v1.8.1
+            fi
+          done
           if ! git diff --exit-code; then
               echo "Documentation not up to date. Please run helm-docs and commit changes!" >&2
               exit 1
